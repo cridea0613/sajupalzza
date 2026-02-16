@@ -4,63 +4,72 @@ import { styled, useTheme } from '@mui/material/styles';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 
-// --- 스타일 컴포넌트 정의 (레이아웃 변경) ---
+// --- 스타일 컴포넌트 정의 (이미지 기반 레이아웃) ---
 
-const RecommendationRow = styled(Paper)(({ theme, type }) => {
-    const typeColors = {
-        '천생연분': theme.palette.error.light,
-        '좋은 궁합': theme.palette.info.light,
-        '친구 같은 궁합': theme.palette.success.light,
-    };
-
-    return {
-        padding: theme.spacing(2, 3),
-        marginBottom: theme.spacing(2.5),
-        borderLeft: `5px solid ${typeColors[type] || theme.palette.grey[400]}`,
-        background: 'rgba(255, 255, 255, 0.7)',
-        backdropFilter: 'blur(10px)',
-        transition: 'box-shadow 0.3s ease, transform 0.3s ease',
-        '&:hover': {
-            boxShadow: theme.shadows[6],
-            transform: 'translateY(-3px)',
-        },
-    };
-});
-
-const TypeTypography = styled(Typography)(({ theme, type }) => {
-    const typeColors = {
-        '천생연분': theme.palette.error.main,
-        '좋은 궁합': theme.palette.info.main,
-        '친구 같은 궁합': theme.palette.success.main,
-    };
-    return {
-        fontWeight: 'bold',
-        color: typeColors[type] || theme.palette.text.primary,
-        fontFamily: '"Gowun Batang", serif',
-    };
-});
-
-const IljuTypography = styled(Typography)(({ theme }) => ({
-    fontFamily: '"Gowun Batang", serif',
-    fontWeight: '700',
-    color: theme.palette.text.secondary,
+const RecommendationContainer = styled(Paper)(({ theme }) => ({
+    border: `1px solid ${theme.palette.divider}`,
+    padding: 0,
+    marginBottom: theme.spacing(2.5),
+    boxShadow: 'none',
+    borderRadius: theme.shape.borderRadius,
+    overflow: 'hidden', // Ensure children with borders fit correctly
 }));
 
-const DescriptionTypography = styled(Typography)(({ theme }) => ({
-    fontFamily: '"Gowun Dodum", sans-serif',
-    lineHeight: 1.6,
-    color: theme.palette.text.primary,
+const TopSection = styled(Box)(({ theme }) => ({
+    display: 'flex',
+    width: '100%',
 }));
 
-const modalStyle = { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '90%', maxWidth: 500, bgcolor: '#FFF8E1', boxShadow: 24, p: 4, borderRadius: 2, border: '1px solid #8B4513' };
+const BottomSection = styled(Box)(({ theme }) => ({
+    display: 'flex',
+    alignItems: 'center',
+    padding: theme.spacing(2),
+    width: '100%',
+    [theme.breakpoints.down('sm')]: {
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+    },
+}));
 
+const TypeBox = styled(Box)(({ theme }) => ({
+    padding: theme.spacing(1, 2),
+    width: '30%',
+    maxWidth: '150px',
+    borderRight: `1px solid ${theme.palette.divider}`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.02)',
+}));
+
+const IljuBox = styled(Box)(({ theme }) => ({
+    padding: theme.spacing(1, 2),
+    display: 'flex',
+    alignItems: 'center',
+}));
+
+const DescriptionBox = styled(Box)(({ theme }) => ({
+    flexGrow: 1,
+    paddingRight: theme.spacing(2),
+    [theme.breakpoints.down('sm')]: {
+        paddingRight: 0,
+        marginBottom: theme.spacing(2),
+    },
+}));
+
+const ActionBox = styled(Box)(({ theme }) => ({
+    [theme.breakpoints.down('sm')]: {
+        width: '100%',
+        textAlign: 'center',
+    },
+}));
+
+const modalStyle = { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '90%', maxWidth: 500, bgcolor: 'background.paper', boxShadow: 24, p: 4, borderRadius: 2 };
 
 // --- 메인 컴포넌트 ---
 const Compatibility = ({ recommendations }) => {
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedIlgan, setSelectedIlgan] = useState(null);
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const handleOpenModal = (rec) => {
         setSelectedIlgan(rec);
@@ -79,56 +88,51 @@ const Compatibility = ({ recommendations }) => {
     return (
         <Box sx={{ mt: 4 }}>
             {recommendations.map((rec, index) => (
-                <RecommendationRow key={index} type={rec.type} elevation={2}>
-                    <Grid container alignItems="center" spacing={{ xs: 2, sm: 3 }}>
-                        {/* 왼쪽 섹션 */}
-                        <Grid item xs={12} sm={3} sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
-                            <TypeTypography variant="subtitle1" type={rec.type}>
+                <RecommendationContainer key={index} variant="outlined">
+                    <TopSection>
+                        <TypeBox>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: 'text.secondary' }}>
                                 {rec.type}
-                            </TypeTypography>
-                            <IljuTypography variant="h6">
+                            </Typography>
+                        </TypeBox>
+                        <IljuBox>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
                                 {rec.ilju}
-                            </IljuTypography>
-                        </Grid>
-                        
-                        {/* 중앙 섹션 */}
-                        <Grid item xs={12} sm={6} sx={{ textAlign: { xs: 'left', sm: 'center' } }}>
-                            <DescriptionTypography variant="body2">
-                                {rec.compatibilityDescription}
-                            </DescriptionTypography>
-                        </Grid>
+                            </Typography>
+                        </IljuBox>
+                    </TopSection>
+                    
+                    <Divider />
 
-                        {/* 오른쪽 섹션 */}
-                        <Grid item xs={12} sm={3} sx={{ textAlign: { xs: 'center', sm: 'right' } }}>
+                    <BottomSection>
+                        <DescriptionBox>
+                            <Typography variant="body2" color="text.secondary">
+                                {rec.compatibilityDescription}
+                            </Typography>
+                        </DescriptionBox>
+                        <ActionBox>
                             <Button 
                                 size="small" 
                                 variant="outlined"
                                 startIcon={<InfoOutlinedIcon />}
                                 onClick={() => handleOpenModal(rec)}
-                                sx={{ 
-                                    color: '#5D4037', 
-                                    borderColor: 'rgba(93, 64, 55, 0.3)',
-                                    '&:hover': { 
-                                        backgroundColor: 'rgba(93, 64, 55, 0.04)',
-                                        borderColor: 'rgba(93, 64, 55, 0.5)',
-                                    } 
-                                }}
+                                sx={{ color: 'text.primary', borderColor: 'grey.400' }}
                             >
                                 자세히 보기
                             </Button>
-                        </Grid>
-                    </Grid>
-                </RecommendationRow>
+                        </ActionBox>
+                    </BottomSection>
+                </RecommendationContainer>
             ))}
 
             <Modal open={modalOpen} onClose={handleCloseModal}>
                 <Box sx={modalStyle}>
-                    <IconButton onClick={handleCloseModal} sx={{ position: 'absolute', right: 8, top: 8, color: '#8B4513' }}><CloseIcon /></IconButton>
-                    <Typography variant="h5" component="h2" sx={{ fontFamily: '"Gowun Batang", serif', fontWeight: '700', color: '#8B4513' }} gutterBottom>
+                    <IconButton onClick={handleCloseModal} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton>
+                    <Typography variant="h5" component="h2" sx={{ fontWeight: 'bold' }} gutterBottom>
                         {selectedIlgan?.ilju}
                     </Typography>
-                    <Divider sx={{ my: 2, borderColor: 'rgba(139, 69, 19, 0.2)' }} />
-                    <Typography sx={{ mt: 2, fontFamily: '"Gowun Dodum", sans-serif' }}>
+                    <Divider sx={{ my: 2 }} />
+                    <Typography sx={{ mt: 2 }}>
                         {selectedIlgan?.ilganDescription}
                     </Typography>
                 </Box>
