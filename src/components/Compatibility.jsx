@@ -1,94 +1,66 @@
 import React, { useState } from 'react';
-import { Grid, Paper, Typography, Box, Chip, Button, Modal, IconButton, Divider } from '@mui/material';
-import { styled } from '@mui/material/styles';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import PeopleIcon from '@mui/icons-material/People';
-import HandshakeIcon from '@mui/icons-material/Handshake';
+import { Grid, Paper, Typography, Box, Button, Modal, IconButton, Divider, useMediaQuery } from '@mui/material';
+import { styled, useTheme } from '@mui/material/styles';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 
-// --- 스타일 컴포넌트 정의 ---
+// --- 스타일 컴포넌트 정의 (레이아웃 변경) ---
 
-const RecommendationCard = styled(Paper)(({ theme, type }) => {
-    const colors = {
-        '천생연분': { background: 'linear-gradient(145deg, #FFDDE1, #FFC2C8)', icon: '#E91E63' }, // 핑크
-        '좋은 궁합': { background: 'linear-gradient(145deg, #D4E7FE, #B7D8FF)', icon: '#2196F3' }, // 블루
-        '친구 같은 궁합': { background: 'linear-gradient(145deg, #D7F9E9, #B2F3D5)', icon: '#4CAF50' }, // 그린
+const RecommendationRow = styled(Paper)(({ theme, type }) => {
+    const typeColors = {
+        '천생연분': theme.palette.error.light,
+        '좋은 궁합': theme.palette.info.light,
+        '친구 같은 궁합': theme.palette.success.light,
     };
 
     return {
-        padding: theme.spacing(3),
-        height: '100%',
-        border: '1px solid rgba(0, 0, 0, 0.05)',
-        background: colors[type]?.background || '#FFFFFF',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        transition: 'transform 0.3s ease, boxShadow 0.3s ease',
+        padding: theme.spacing(2, 3),
+        marginBottom: theme.spacing(2.5),
+        borderLeft: `5px solid ${typeColors[type] || theme.palette.grey[400]}`,
+        background: 'rgba(255, 255, 255, 0.7)',
+        backdropFilter: 'blur(10px)',
+        transition: 'box-shadow 0.3s ease, transform 0.3s ease',
         '&:hover': {
-            transform: 'translateY(-5px)',
-            boxShadow: theme.shadows[10],
-        }
+            boxShadow: theme.shadows[6],
+            transform: 'translateY(-3px)',
+        },
     };
 });
 
-const TypeChip = styled(Chip)(({ theme, type }) => {
-     const colors = {
-        '천생연분': { backgroundColor: '#E91E63', color: '#fff' },
-        '좋은 궁합': { backgroundColor: '#2196F3', color: '#fff' },
-        '친구 같은 궁합': { backgroundColor: '#4CAF50', color: '#fff' },
+const TypeTypography = styled(Typography)(({ theme, type }) => {
+    const typeColors = {
+        '천생연분': theme.palette.error.main,
+        '좋은 궁합': theme.palette.info.main,
+        '친구 같은 궁합': theme.palette.success.main,
     };
     return {
-        ...colors[type],
         fontWeight: 'bold',
-        marginBottom: theme.spacing(2),
-        boxShadow: `0 2px 8px -2px ${colors[type]?.backgroundColor || '#000'}`,
+        color: typeColors[type] || theme.palette.text.primary,
+        fontFamily: '"Gowun Batang", serif',
     };
 });
 
 const IljuTypography = styled(Typography)(({ theme }) => ({
     fontFamily: '"Gowun Batang", serif',
     fontWeight: '700',
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: theme.spacing(1),
+    color: theme.palette.text.secondary,
 }));
 
 const DescriptionTypography = styled(Typography)(({ theme }) => ({
     fontFamily: '"Gowun Dodum", sans-serif',
-    lineHeight: 1.7,
-    color: '#555',
-    textAlign: 'center',
-    flexGrow: 1,
-    marginBottom: theme.spacing(2),
+    lineHeight: 1.6,
+    color: theme.palette.text.primary,
 }));
 
-const IconWrapper = styled(Box)(({ theme, type }) => {
-    const colors = {
-        '천생연분': '#E91E63',
-        '좋은 궁합': '#2196F3',
-        '친구 같은 궁합': '#4CAF50',
-    };
-    return {
-        textAlign: 'center',
-        color: colors[type] || '#000',
-        marginBottom: theme.spacing(1.5),
-    };
-});
-
 const modalStyle = { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '90%', maxWidth: 500, bgcolor: '#FFF8E1', boxShadow: 24, p: 4, borderRadius: 2, border: '1px solid #8B4513' };
-
-const iconMap = {
-    '천생연분': <FavoriteIcon fontSize="large" />,
-    '좋은 궁합': <HandshakeIcon fontSize="large" />,
-    '친구 같은 궁합': <PeopleIcon fontSize="large" />,
-};
 
 
 // --- 메인 컴포넌트 ---
 const Compatibility = ({ recommendations }) => {
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedIlgan, setSelectedIlgan] = useState(null);
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const handleOpenModal = (rec) => {
         setSelectedIlgan(rec);
@@ -106,43 +78,50 @@ const Compatibility = ({ recommendations }) => {
 
     return (
         <Box sx={{ mt: 4 }}>
-            <Grid container spacing={3}>
-                {recommendations.map((rec, index) => (
-                    <Grid item xs={12} md={4} key={index}>
-                        <RecommendationCard type={rec.type}>
-                            <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                                    <TypeChip label={rec.type} type={rec.type} />
-                                </Box>
-                                <IconWrapper type={rec.type}>
-                                    {iconMap[rec.type]}
-                                 </IconWrapper>
-                                <IljuTypography variant="h5">
-                                    {rec.ilju}
-                                </IljuTypography>
-                                <DescriptionTypography variant="body2">
-                                    {rec.compatibilityDescription}
-                                </DescriptionTypography>
-                                <Box sx={{ textAlign: 'center', mt: 'auto' }}>
-                                    <Button 
-                                        size="small" 
-                                        startIcon={<InfoOutlinedIcon />} 
-                                        onClick={() => handleOpenModal(rec)}
-                                        sx={{ color: '#5D4037', '&:hover': { backgroundColor: 'rgba(93, 64, 55, 0.04)' } }}
-                                    >
-                                        자세히 보기
-                                    </Button>
-                                </Box>
-                            </Box>
-                        </RecommendationCard>
-                    </Grid>
-                ))}
-            </Grid>
+            {recommendations.map((rec, index) => (
+                <RecommendationRow key={index} type={rec.type} elevation={2}>
+                    <Grid container alignItems="center" spacing={{ xs: 2, sm: 3 }}>
+                        {/* 왼쪽 섹션 */}
+                        <Grid item xs={12} sm={3} sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
+                            <TypeTypography variant="subtitle1" type={rec.type}>
+                                {rec.type}
+                            </TypeTypography>
+                            <IljuTypography variant="h6">
+                                {rec.ilju}
+                            </IljuTypography>
+                        </Grid>
+                        
+                        {/* 중앙 섹션 */}
+                        <Grid item xs={12} sm={6} sx={{ textAlign: { xs: 'left', sm: 'center' } }}>
+                            <DescriptionTypography variant="body2">
+                                {rec.compatibilityDescription}
+                            </DescriptionTypography>
+                        </Grid>
 
-            <Modal
-                open={modalOpen}
-                onClose={handleCloseModal}
-            >
+                        {/* 오른쪽 섹션 */}
+                        <Grid item xs={12} sm={3} sx={{ textAlign: { xs: 'center', sm: 'right' } }}>
+                            <Button 
+                                size="small" 
+                                variant="outlined"
+                                startIcon={<InfoOutlinedIcon />}
+                                onClick={() => handleOpenModal(rec)}
+                                sx={{ 
+                                    color: '#5D4037', 
+                                    borderColor: 'rgba(93, 64, 55, 0.3)',
+                                    '&:hover': { 
+                                        backgroundColor: 'rgba(93, 64, 55, 0.04)',
+                                        borderColor: 'rgba(93, 64, 55, 0.5)',
+                                    } 
+                                }}
+                            >
+                                자세히 보기
+                            </Button>
+                        </Grid>
+                    </Grid>
+                </RecommendationRow>
+            ))}
+
+            <Modal open={modalOpen} onClose={handleCloseModal}>
                 <Box sx={modalStyle}>
                     <IconButton onClick={handleCloseModal} sx={{ position: 'absolute', right: 8, top: 8, color: '#8B4513' }}><CloseIcon /></IconButton>
                     <Typography variant="h5" component="h2" sx={{ fontFamily: '"Gowun Batang", serif', fontWeight: '700', color: '#8B4513' }} gutterBottom>
