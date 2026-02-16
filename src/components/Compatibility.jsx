@@ -1,9 +1,11 @@
-import React from 'react';
-import { Grid, Paper, Typography, Box, Chip } from '@mui/material';
+import React, { useState } from 'react';
+import { Grid, Paper, Typography, Box, Chip, Button, Modal, IconButton, Divider } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import PeopleIcon from '@mui/icons-material/People';
 import HandshakeIcon from '@mui/icons-material/Handshake';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import CloseIcon from '@mui/icons-material/Close';
 
 // --- 스타일 컴포넌트 정의 ---
 
@@ -22,10 +24,10 @@ const RecommendationCard = styled(Paper)(({ theme, type }) => {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+        transition: 'transform 0.3s ease, boxShadow 0.3s ease',
         '&:hover': {
             transform: 'translateY(-5px)',
-            box-shadow: theme.shadows[10],
+            boxShadow: theme.shadows[10],
         }
     };
 });
@@ -49,7 +51,7 @@ const IljuTypography = styled(Typography)(({ theme }) => ({
     fontWeight: '700',
     color: '#333',
     textAlign: 'center',
-    marginBottom: theme.spacing(2),
+    marginBottom: theme.spacing(1),
 }));
 
 const DescriptionTypography = styled(Typography)(({ theme }) => ({
@@ -57,6 +59,8 @@ const DescriptionTypography = styled(Typography)(({ theme }) => ({
     lineHeight: 1.7,
     color: '#555',
     textAlign: 'center',
+    flexGrow: 1,
+    marginBottom: theme.spacing(2),
 }));
 
 const IconWrapper = styled(Box)(({ theme, type }) => {
@@ -72,15 +76,30 @@ const IconWrapper = styled(Box)(({ theme, type }) => {
     };
 });
 
+const modalStyle = { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '90%', maxWidth: 500, bgcolor: '#FFF8E1', boxShadow: 24, p: 4, borderRadius: 2, border: '1px solid #8B4513' };
+
 const iconMap = {
     '천생연분': <FavoriteIcon fontSize="large" />,
     '좋은 궁합': <HandshakeIcon fontSize="large" />,
     '친구 같은 궁합': <PeopleIcon fontSize="large" />,
 };
 
-// --- 메인 컴포넌트 ---
 
+// --- 메인 컴포넌트 ---
 const Compatibility = ({ recommendations }) => {
+    const [modalOpen, setModalOpen] = useState(false);
+    const [selectedIlgan, setSelectedIlgan] = useState(null);
+
+    const handleOpenModal = (rec) => {
+        setSelectedIlgan(rec);
+        setModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setModalOpen(false);
+        setSelectedIlgan(null);
+    };
+
     if (!recommendations || recommendations.length === 0) {
         return <Typography>추천 궁합 정보를 찾을 수 없습니다.</Typography>;
     }
@@ -91,7 +110,7 @@ const Compatibility = ({ recommendations }) => {
                 {recommendations.map((rec, index) => (
                     <Grid item xs={12} md={4} key={index}>
                         <RecommendationCard type={rec.type}>
-                            <Box>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                                     <TypeChip label={rec.type} type={rec.type} />
                                 </Box>
@@ -101,14 +120,40 @@ const Compatibility = ({ recommendations }) => {
                                 <IljuTypography variant="h5">
                                     {rec.ilju}
                                 </IljuTypography>
+                                <DescriptionTypography variant="body2">
+                                    {rec.compatibilityDescription}
+                                </DescriptionTypography>
+                                <Box sx={{ textAlign: 'center', mt: 'auto' }}>
+                                    <Button 
+                                        size="small" 
+                                        startIcon={<InfoOutlinedIcon />} 
+                                        onClick={() => handleOpenModal(rec)}
+                                        sx={{ color: '#5D4037', '&:hover': { backgroundColor: 'rgba(93, 64, 55, 0.04)' } }}
+                                    >
+                                        자세히 보기
+                                    </Button>
+                                </Box>
                             </Box>
-                            <DescriptionTypography variant="body2">
-                                {rec.description}
-                            </DescriptionTypography>
                         </RecommendationCard>
                     </Grid>
                 ))}
             </Grid>
+
+            <Modal
+                open={modalOpen}
+                onClose={handleCloseModal}
+            >
+                <Box sx={modalStyle}>
+                    <IconButton onClick={handleCloseModal} sx={{ position: 'absolute', right: 8, top: 8, color: '#8B4513' }}><CloseIcon /></IconButton>
+                    <Typography variant="h5" component="h2" sx={{ fontFamily: '"Gowun Batang", serif', fontWeight: '700', color: '#8B4513' }} gutterBottom>
+                        {selectedIlgan?.ilju}
+                    </Typography>
+                    <Divider sx={{ my: 2, borderColor: 'rgba(139, 69, 19, 0.2)' }} />
+                    <Typography sx={{ mt: 2, fontFamily: '"Gowun Dodum", sans-serif' }}>
+                        {selectedIlgan?.ilganDescription}
+                    </Typography>
+                </Box>
+            </Modal>
         </Box>
     );
 };

@@ -19,11 +19,10 @@ const JIJI_LIST = Object.keys(JIJI);
 const SOLAR_TERMS = { 1: { "소한": 5, "대한": 20 }, 2: { "입춘": 4, "우수": 19 }, 3: { "경칩": 5, "춘분": 20 }, 4: { "청명": 4, "곡우": 19 }, 5: { "입하": 5, "소만": 20 }, 6: { "망종": 5, "하지": 21 }, 7: { "소서": 6, "대서": 22 }, 8: { "입추": 7, "처서": 22 }, 9: { "백로": 7, "추분": 22 }, 10: { "한로": 8, "상강": 23 }, 11: { "입동": 7, "소설": 22 }, 12: { "대설": 7, "동지": 21 } };
 const ZODIAC_ANIMALS = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"];
 
-// --- 궁합 관련 데이터 추가 ---
 const CHEONGAN_HAP_MAP = { "甲": "己", "己": "甲", "乙": "庚", "庚": "乙", "丙": "辛", "辛": "丙", "丁": "壬", "壬": "丁", "戊": "癸", "癸": "戊" };
 const ELEMENT_RELATIONS = {
-    generates: { "목": "화", "화": "토", "토": "금", "금": "수", "수": "목" }, // 상생
-    generated_by: { "화": "목", "토": "화", "금": "토", "수": "금", "목": "수" }, // 나를 생조
+    generates: { "목": "화", "화": "토", "토": "금", "금": "수", "수": "목" },
+    generated_by: { "화": "목", "토": "화", "금": "토", "수": "금", "목": "수" },
 };
 
 const ILGAN_DESCRIPTION_MAP = {
@@ -141,51 +140,47 @@ const getDaeunPeriods = (monthPillar, daeunInfo, ilgan) => {
     return periods;
 };
 
-// --- 궁합 추천 함수 추가 ---
+// --- 궁합 추천 함수 (개선) ---
 const getCompatibility = (ilgan) => {
     const recommendations = [];
     const ilganData = CHEONGAN[ilgan];
     if (!ilganData) return [];
 
+    const addRecommendation = (type, gan, relationDescription) => {
+        const ganData = CHEONGAN[gan];
+        recommendations.push({
+            type: type,
+            ilju: `${ganData.hangeul}(${gan}) 일주`,
+            compatibilityDescription: relationDescription,
+            ilganDescription: ILGAN_DESCRIPTION_MAP[gan]
+        });
+    };
+
     // 1. 천생연분 (천간합)
     const soulmateGan = CHEONGAN_HAP_MAP[ilgan];
     if (soulmateGan) {
-        const soulmateData = CHEONGAN[soulmateGan];
-        recommendations.push({
-            type: "천생연분",
-            ilju: `${soulmateData.hangeul}${soulmateGan} 일주`,
-            description: `나의 일간 '${ilganData.hangeul}'과 하늘의 기운이 합을 이루는 최고의 궁합입니다. 서로에게 강하게 끌리며, 안정적인 관계를 만들어갑니다.`
-        });
+        addRecommendation("천생연분", soulmateGan, `나의 일간 '${ilganData.hangeul}'과 하늘의 기운이 합을 이루는 최고의 궁합입니다. 서로에게 강하게 끌리며, 안정적인 관계를 만들어갑니다.`);
     }
 
     // 2. 좋은 궁합 (내가 생해주는 오행)
     const generatedElement = ELEMENT_RELATIONS.generates[ilganData.element];
-    const goodMatchGan = Object.keys(CHEONGAN).find(gan => CHEONGAN[gan].element === generatedElement && CHEONGAN[gan].yin_yang !== ilganData.yin_yang)
-                       || Object.keys(CHEONGAN).find(gan => CHEONGAN[gan].element === generatedElement);
+    const goodMatchGan = Object.keys(CHEONGAN).find(gan => gan !== ilgan && CHEONGAN[gan].element === generatedElement && CHEONGAN[gan].yin_yang !== ilganData.yin_yang)
+                       || Object.keys(CHEONGAN).find(gan => gan !== ilgan && CHEONGAN[gan].element === generatedElement);
     if (goodMatchGan) {
-         const goodMatchData = CHEONGAN[goodMatchGan];
-         recommendations.push({
-            type: "좋은 궁합",
-            ilju: `${goodMatchData.hangeul}${goodMatchGan} 일주`,
-            description: `내가 도움을 주고 이끌어줄 수 있는 관계입니다. 나의 에너지가 상대방에게 힘이 되어주며, 함께 성장하는 즐거움이 있습니다.`
-        });
+        addRecommendation("좋은 궁합", goodMatchGan, `내가 도움을 주고 이끌어줄 수 있는 관계입니다. 나의 에너지가 상대방에게 힘이 되어주며, 함께 성장하는 즐거움이 있습니다.`);
     }
 
     // 3. 친구 같은 궁합 (나를 생해주는 오행)
     const generatingElement = ELEMENT_RELATIONS.generated_by[ilganData.element];
-    const supportiveMatchGan = Object.keys(CHEONGAN).find(gan => CHEONGAN[gan].element === generatingElement && CHEONGAN[gan].yin_yang !== ilganData.yin_yang)
-                             || Object.keys(CHEONGAN).find(gan => CHEONGAN[gan].element === generatingElement);
+    const supportiveMatchGan = Object.keys(CHEONGAN).find(gan => gan !== ilgan && CHEONGAN[gan].element === generatingElement && CHEONGAN[gan].yin_yang !== ilganData.yin_yang)
+                             || Object.keys(CHEONGAN).find(gan => gan !== ilgan && CHEONGAN[gan].element === generatingElement);
     if (supportiveMatchGan) {
-        const supportiveData = CHEONGAN[supportiveMatchGan];
-        recommendations.push({
-            type: "친구 같은 궁합",
-            ilju: `${supportiveData.hangeul}${supportiveMatchGan} 일주`,
-            description: `나에게 도움을 주고 기운을 북돋아 주는 든든한 관계입니다. 함께 있으면 편안하고, 안정감을 느낄 수 있습니다.`
-        });
+        addRecommendation("친구 같은 궁합", supportiveMatchGan, `나에게 도움을 주고 기운을 북돋아 주는 든든한 관계입니다. 함께 있으면 편안하고, 안정감을 느낄 수 있습니다.`);
     }
 
     return recommendations.slice(0, 3);
 };
+
 
 // --- 메인 함수 ---
 export const getSaju = (birthDate, gender, timeUnknown = false) => {
@@ -276,7 +271,6 @@ export const getSaju = (birthDate, gender, timeUnknown = false) => {
                         { type: "tojeong_monthly", content: { monthly: tojeongData.monthly } }
                     ]
                 },
-                // --- 궁합 섹션 추가 ---
                 {
                     id: "compatibility_analysis",
                     title: "나와 잘 맞는 사주 추천",
