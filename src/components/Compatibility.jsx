@@ -1,46 +1,65 @@
 import React, { useState } from 'react';
 import { Grid, Paper, Typography, Box, Button, Modal, IconButton, Divider, useMediaQuery } from '@mui/material';
-import { styled, useTheme } from '@mui/material/styles';
+import { alpha, styled, useTheme } from '@mui/material/styles';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 
-// --- 스타일 컴포넌트 정의 (이미지 기반 레이아웃) ---
+// --- 스타일 컴포넌트 정의 (디자인 개선) ---
 
-const RecommendationContainer = styled(Paper)(({ theme }) => ({
-    border: `1px solid ${theme.palette.divider}`,
-    padding: 0,
-    marginBottom: theme.spacing(2.5),
-    boxShadow: 'none',
-    borderRadius: theme.shape.borderRadius,
-    overflow: 'hidden', // Ensure children with borders fit correctly
-}));
+const RecommendationContainer = styled(Paper)(({ theme, type }) => {
+    const typeColors = {
+        '천생연분': { bg: alpha(theme.palette.error.light, 0.2), border: theme.palette.error.main },
+        '좋은 궁합': { bg: alpha(theme.palette.info.light, 0.2), border: theme.palette.info.main },
+        '친구 같은 궁합': { bg: alpha(theme.palette.success.light, 0.2), border: theme.palette.success.main },
+    };
+
+    return {
+        border: `1px solid ${typeColors[type]?.border || theme.palette.divider}`,
+        backgroundColor: typeColors[type]?.bg || theme.palette.background.paper,
+        padding: 0,
+        marginBottom: theme.spacing(2.5),
+        boxShadow: 'none',
+        borderRadius: theme.shape.borderRadius,
+        overflow: 'hidden',
+        position: 'relative',
+        transition: 'box-shadow 0.3s ease',
+         '&:hover': {
+            boxShadow: `0 4px 12px ${alpha(typeColors[type]?.border || theme.palette.common.black, 0.2)}`,
+        },
+    };
+});
 
 const TopSection = styled(Box)(({ theme }) => ({
     display: 'flex',
     width: '100%',
+    borderBottom: `1px solid ${theme.palette.divider}`,
 }));
 
 const BottomSection = styled(Box)(({ theme }) => ({
-    display: 'flex',
-    alignItems: 'center',
     padding: theme.spacing(2),
-    width: '100%',
+    paddingBottom: theme.spacing(5), // 버튼 공간 확보
     [theme.breakpoints.down('sm')]: {
-        flexDirection: 'column',
-        alignItems: 'flex-start',
+        paddingBottom: theme.spacing(6),
     },
 }));
 
-const TypeBox = styled(Box)(({ theme }) => ({
-    padding: theme.spacing(1, 2),
-    width: '30%',
-    maxWidth: '150px',
-    borderRight: `1px solid ${theme.palette.divider}`,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.02)',
-}));
+const TypeBox = styled(Box)(({ theme, type }) => {
+     const typeColors = {
+        '천생연분': alpha(theme.palette.error.main, 0.1),
+        '좋은 궁합': alpha(theme.palette.info.main, 0.1),
+        '친구 같은 궁합': alpha(theme.palette.success.main, 0.1),
+    };
+    return {
+        padding: theme.spacing(1, 2),
+        width: '30%',
+        maxWidth: '150px',
+        borderRight: `1px solid ${theme.palette.divider}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: typeColors[type],
+    };
+});
 
 const IljuBox = styled(Box)(({ theme }) => ({
     padding: theme.spacing(1, 2),
@@ -48,19 +67,15 @@ const IljuBox = styled(Box)(({ theme }) => ({
     alignItems: 'center',
 }));
 
-const DescriptionBox = styled(Box)(({ theme }) => ({
-    flexGrow: 1,
-    paddingRight: theme.spacing(2),
-    [theme.breakpoints.down('sm')]: {
-        paddingRight: 0,
-        marginBottom: theme.spacing(2),
-    },
-}));
-
 const ActionBox = styled(Box)(({ theme }) => ({
-    [theme.breakpoints.down('sm')]: {
-        width: '100%',
-        textAlign: 'center',
+    position: 'absolute',
+    bottom: theme.spacing(1),
+    right: theme.spacing(1.5),
+     [theme.breakpoints.down('sm')]: {
+        bottom: theme.spacing(1),
+        right: 'auto',
+        left: '50%',
+        transform: 'translateX(-50%)',
     },
 }));
 
@@ -88,10 +103,10 @@ const Compatibility = ({ recommendations }) => {
     return (
         <Box sx={{ mt: 4 }}>
             {recommendations.map((rec, index) => (
-                <RecommendationContainer key={index} variant="outlined">
+                <RecommendationContainer key={index} type={rec.type}>
                     <TopSection>
-                        <TypeBox>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: 'text.secondary' }}>
+                        <TypeBox type={rec.type}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 'bold'}}>
                                 {rec.type}
                             </Typography>
                         </TypeBox>
@@ -102,26 +117,31 @@ const Compatibility = ({ recommendations }) => {
                         </IljuBox>
                     </TopSection>
                     
-                    <Divider />
-
                     <BottomSection>
-                        <DescriptionBox>
-                            <Typography variant="body2" color="text.secondary">
-                                {rec.compatibilityDescription}
-                            </Typography>
-                        </DescriptionBox>
-                        <ActionBox>
-                            <Button 
-                                size="small" 
-                                variant="outlined"
-                                startIcon={<InfoOutlinedIcon />}
-                                onClick={() => handleOpenModal(rec)}
-                                sx={{ color: 'text.primary', borderColor: 'grey.400' }}
-                            >
-                                자세히 보기
-                            </Button>
-                        </ActionBox>
+                        <Typography variant="body2" color="text.secondary">
+                            {rec.compatibilityDescription}
+                        </Typography>
                     </BottomSection>
+
+                    <ActionBox>
+                        <Button 
+                            size="small" 
+                            variant="text"
+                            startIcon={<InfoOutlinedIcon fontSize="small" />}
+                            onClick={() => handleOpenModal(rec)}
+                            sx={{ 
+                                fontSize: '0.75rem', 
+                                color: 'text.secondary',
+                                padding: '2px 8px',
+                                minWidth: 'auto',
+                                '&:hover': { 
+                                    backgroundColor: 'rgba(0,0,0,0.04)' 
+                                }
+                            }}
+                        >
+                            자세히
+                        </Button>
+                    </ActionBox>
                 </RecommendationContainer>
             ))}
 
