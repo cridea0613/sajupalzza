@@ -1,18 +1,18 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Box, CircularProgress, Typography, Paper, Grid, Button, Divider, Chip, Tabs, Tab, Modal, IconButton, Snackbar, Alert } from '@mui/material';
+import Cookies from 'js-cookie';
+import { Box, CircularProgress, Typography, Paper, Grid, Button, Divider, Chip, Tabs, Tab, Modal, IconButton, Snackbar, Alert, TextField, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import CloseIcon from '@mui/icons-material/Close';
 import ShareIcon from '@mui/icons-material/Share';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import SaveIcon from '@mui/icons-material/Save';
 import { getSaju } from '../utils/saju.js';
 import { sajuDict } from '../utils/saju-dict.js';
-import Compatibility from './Compatibility'; // 궁합 컴포넌트 임포트
-import TojeongResult from './TojeongResult'; // 토정비결 결과 컴포넌트
-import ConfirmDialog from './ConfirmDialog'; // 확인 다이얼로그 컴포넌트 임포트
-
-// --- 스타일 정의 ---
+import Compatibility from './Compatibility';
+import TojeongResult from './TojeongResult';
+import ConfirmDialog from './ConfirmDialog';
 
 const StyledRoot = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
@@ -111,7 +111,7 @@ const SajuResult = () => {
 
     const queryData = useMemo(() => ({
         name: searchParams.get('name'),
-        birthDateISO: searchParams.get('birthDate'),
+        birthDate: searchParams.get('birthDate'),
         gender: searchParams.get('gender'),
         timeUnknown: searchParams.get('timeUnknown') === 'true',
     }), [searchParams]);
@@ -120,15 +120,18 @@ const SajuResult = () => {
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedTerm, setSelectedTerm] = useState(null);
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const [confirmOpen, setConfirmOpen] = useState(false);
+    const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+    const [reportName, setReportName] = useState('');
 
     useEffect(() => {
-        const { name, birthDateISO, gender, timeUnknown } = queryData;
-        if (name && birthDateISO && gender) {
-            const birthDate = new Date(birthDateISO);
-            setResult(getSaju(birthDate, gender, timeUnknown));
+        const { name, birthDate, gender, timeUnknown } = queryData;
+        if (name && birthDate && gender) {
+            const birthDateObj = new Date(birthDate);
+            setResult(getSaju(birthDateObj, gender, timeUnknown));
             setLoading(false);
+            setReportName(name + "님의 사주");
         } else {
             navigate('/');
         }
@@ -139,9 +142,35 @@ const SajuResult = () => {
         navigate('/');
     };
 
-    const handleShare = () => { navigator.clipboard.writeText(window.location.href).then(() => setSnackbarOpen(true)); };
+    const handleShare = () => { 
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            setSnackbar({ open: true, message: '링크가 클립보드에 복사되었습니다!', severity: 'success' });
+        }); 
+    };
+    
     const handlePrint = () => { window.print(); };
     const handleTermClick = (term) => { setSelectedTerm(term); setModalOpen(true); };
+
+    const handleSaveReport = () => {
+        if (!reportName.trim()) {
+            setSnackbar({ open: true, message: '리포트 이름을 입력해주세요.', severity: 'error' });
+            return;
+        }
+
+        const newReport = { name: reportName, data: queryData };
+        const savedReports = Cookies.get('saju_reports');
+        let reports = savedReports ? JSON.parse(savedReports) : [];
+
+        if (reports.some(report => report.name === reportName)) {
+            setSnackbar({ open: true, message: '이미 사용중인 이름입니다.', severity: 'error' });
+            return;
+        }
+
+        reports.push(newReport);
+        Cookies.set('saju_reports', JSON.stringify(reports), { expires: 365 });
+        setSaveDialogOpen(false);
+        setSnackbar({ open: true, message: '리포트가 성공적으로 저장되었습니다!', severity: 'success' });
+    };
     
     const renderBlock = (block, index) => {
         switch (block.type) {
@@ -222,8 +251,9 @@ const SajuResult = () => {
                 ))}
                  
                 <Divider sx={{ my: 4, borderColor: 'rgba(139, 69, 19, 0.2)' }} className="no-print" />
-                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'center', gap: 2, mt: 3 }} className="no-print">
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 2, mt: 3 }} className="no-print">
                     <ActionButton variant="contained" size="large" startIcon={<ArrowBackIcon />} onClick={() => setConfirmOpen(true)} color="secondary">처음으로</ActionButton>
+                    <ActionButton variant="contained" size="large" startIcon={<SaveIcon />} onClick={() => setSaveDialogOpen(true)}>리포트 저장</ActionButton>
                     <ActionButton variant="contained" size="large" startIcon={<ShareIcon />} onClick={handleShare}>링크 공유</ActionButton>
                     <ActionButton variant="contained" size="large" startIcon={<PictureAsPdfIcon />} onClick={handlePrint}>PDF로 저장</ActionButton>
                 </Box>
@@ -239,8 +269,32 @@ const SajuResult = () => {
                 content="정말 처음으로 돌아가시겠습니까? 현재 결과는 저장되지 않습니다."
             />
 
-            <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={() => setSnackbarOpen(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} className="no-print">
-                <Alert onClose={() => setSnackbarOpen(false)} severity="success" sx={{ width: '100%' }}>링크가 클립보드에 복사되었습니다!</Alert>
+            <Dialog open={saveDialogOpen} onClose={() => setSaveDialogOpen(false)}>
+                <DialogTitle>리포트 저장</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>이 리포트를 저장하시겠습니까? 이름을 지정해주세요.</DialogContentText>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        id="report-name"
+                        label="리포트 이름"
+                        type="text"
+                        fullWidth
+                        variant="standard"
+                        value={reportName}
+                        onChange={(e) => setReportName(e.target.value)}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setSaveDialogOpen(false)}>취소</Button>
+                    <Button onClick={handleSaveReport}>저장</Button>
+                </DialogActions>
+            </Dialog>
+
+            <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar({ ...snackbar, open: false })} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+                <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%' }}>
+                    {snackbar.message}
+                </Alert>
             </Snackbar>
         </StyledRoot>
     );
