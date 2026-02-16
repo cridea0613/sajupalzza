@@ -1,6 +1,6 @@
 import { getTojeong } from './tojeong.js';
 
-// --- 데이터 정의부 (한자 기준, 한글 매핑 추가) ---
+// --- 데이터 정의부 ---
 const CHEONGAN = {
     "甲": { element: "목", yin_yang: "양", hangeul: "갑" }, "乙": { element: "목", yin_yang: "음", hangeul: "을" }, "丙": { element: "화", yin_yang: "양", hangeul: "병" }, "丁": { element: "화", yin_yang: "음", hangeul: "정" },
     "戊": { element: "토", yin_yang: "양", hangeul: "무" }, "己": { element: "토", yin_yang: "음", hangeul: "기" }, "庚": { element: "금", yin_yang: "양", hangeul: "경" }, "辛": { element: "금", yin_yang: "음", hangeul: "신" },
@@ -18,6 +18,13 @@ const CHEONGAN_LIST = Object.keys(CHEONGAN);
 const JIJI_LIST = Object.keys(JIJI);
 const SOLAR_TERMS = { 1: { "소한": 5, "대한": 20 }, 2: { "입춘": 4, "우수": 19 }, 3: { "경칩": 5, "춘분": 20 }, 4: { "청명": 4, "곡우": 19 }, 5: { "입하": 5, "소만": 20 }, 6: { "망종": 5, "하지": 21 }, 7: { "소서": 6, "대서": 22 }, 8: { "입추": 7, "처서": 22 }, 9: { "백로": 7, "추분": 22 }, 10: { "한로": 8, "상강": 23 }, 11: { "입동": 7, "소설": 22 }, 12: { "대설": 7, "동지": 21 } };
 const ZODIAC_ANIMALS = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"];
+
+// --- 궁합 관련 데이터 추가 ---
+const CHEONGAN_HAP_MAP = { "甲": "己", "己": "甲", "乙": "庚", "庚": "乙", "丙": "辛", "辛": "丙", "丁": "壬", "壬": "丁", "戊": "癸", "癸": "戊" };
+const ELEMENT_RELATIONS = {
+    generates: { "목": "화", "화": "토", "토": "금", "금": "수", "수": "목" }, // 상생
+    generated_by: { "화": "목", "토": "화", "금": "토", "수": "금", "목": "수" }, // 나를 생조
+};
 
 const ILGAN_DESCRIPTION_MAP = {
     "甲": "큰 나무처럼 리더십이 있고 의지가 강하며, 항상 위를 향해 나아가려는 성향이 있습니다.",
@@ -45,9 +52,7 @@ const SIPSIN_ANALYSIS_MAP = {
     "정인": "학업에 성취가 따르고, 윗사람의 도움이나 인정을 받아 안정적인 환경에서 발전하는 시기입니다.",
 };
 
-
 // --- 계산 함수 ---
-
 const getSipsin = (ilgan, otherGanji) => {
     const ilganData = CHEONGAN[ilgan];
     const otherData = CHEONGAN[otherGanji] || JIJI[otherGanji];
@@ -62,39 +67,23 @@ const getYearPillar = (year, month, day) => {
     const adjustedYear = isPreviousYear ? year - 1 : year;
     const cheonganIndex = (adjustedYear - 4) % 10;
     const jijiIndex = (adjustedYear - 4) % 12;
-    return {
-        cheongan: CHEONGAN_LIST[cheonganIndex],
-        jiji: JIJI_LIST[jijiIndex]
-    };
+    return { cheongan: CHEONGAN_LIST[cheonganIndex], jiji: JIJI_LIST[jijiIndex] };
 };
 
 const getMonthPillar = (year, month, day) => {
-    const monthStartTerms = [ "입춘", "경칩", "청명", "입하", "망종", "소서", "입추", "백로", "한로", "입동", "대설", "소한" ];
+    const monthStartTerms = ["입춘", "경칩", "청명", "입하", "망종", "소서", "입추", "백로", "한로", "입동", "대설", "소한"];
     const termDate = (y, termName) => {
-        for (const m in SOLAR_TERMS) {
-            if (SOLAR_TERMS[m][termName]) {
-                return new Date(y, parseInt(m) - 1, SOLAR_TERMS[m][termName]);
-            }
-        }
+        for (const m in SOLAR_TERMS) { if (SOLAR_TERMS[m][termName]) return new Date(y, parseInt(m) - 1, SOLAR_TERMS[m][termName]); }
         return null;
     }
-
     let monthJijiIndex = 0;
     for (let i = monthStartTerms.length - 1; i >= 0; i--) {
         const d = termDate(year, monthStartTerms[i]);
-        if (d && (new Date(year, month - 1, day) >= d)) {
-            monthJijiIndex = (i + 2) % 12; 
-            break;
-        }
+        if (d && (new Date(year, month - 1, day) >= d)) { monthJijiIndex = (i + 2) % 12; break; }
     }
-
     const yearCheonganIndex = (year - 4) % 10;
     const monthCheonganIndex = ((yearCheonganIndex + 1) * 2 + monthJijiIndex) % 10;
-
-    return {
-        cheongan: CHEONGAN_LIST[monthCheonganIndex],
-        jiji: JIJI_LIST[monthJijiIndex]
-    };
+    return { cheongan: CHEONGAN_LIST[monthCheonganIndex], jiji: JIJI_LIST[monthJijiIndex] };
 };
 
 const getDayPillar = (year, month, day) => {
@@ -102,69 +91,36 @@ const getDayPillar = (year, month, day) => {
     const baseDate = new Date(1900, 0, 1);
     const diff = Math.floor((date - baseDate) / (1000 * 60 * 60 * 24));
     const dayIndex = (diff + 46) % 60;
-
-    return {
-        cheongan: CHEONGAN_LIST[dayIndex % 10],
-        jiji: JIJI_LIST[dayIndex % 12]
-    };
+    return { cheongan: CHEONGAN_LIST[dayIndex % 10], jiji: JIJI_LIST[dayIndex % 12] };
 };
 
 const getHourPillar = (dayCheongan, hour) => {
     const hourJijiIndex = Math.floor((hour + 1) / 2) % 12;
     const dayCheonganIndex = CHEONGAN_LIST.indexOf(dayCheongan);
-
     const startCheonganOffset = [0, 2, 4, 6, 8][Math.floor(dayCheonganIndex / 2)];
     const hourCheonganIndex = (startCheonganOffset + hourJijiIndex) % 10;
-
-    return {
-        cheongan: CHEONGAN_LIST[hourCheonganIndex],
-        jiji: JIJI_LIST[hourJijiIndex]
-    };
+    return { cheongan: CHEONGAN_LIST[hourCheonganIndex], jiji: JIJI_LIST[hourJijiIndex] };
 };
-
 
 const getDaeunInfo = (birthDate, gender, yearCheongan) => {
     const yearYinYang = CHEONGAN[yearCheongan].yin_yang;
     const direction = (gender === 'male' && yearYinYang === '양') || (gender === 'female' && yearYinYang === '음') ? 'forward' : 'backward';
-
     const termOrder = ["소한", "대한", "입춘", "우수", "경칩", "춘분", "청명", "곡우", "입하", "소만", "망종", "하지", "소서", "대서", "입추", "처서", "백로", "추분", "한로", "상강", "입동", "소설", "대설", "동지"];
-
     const getTermDate = (year, termName) => {
-        for (const month in SOLAR_TERMS) {
-            if (SOLAR_TERMS[month][termName]) {
-                return new Date(year, parseInt(month) - 1, SOLAR_TERMS[month][termName]);
-            }
-        }
+        for (const month in SOLAR_TERMS) { if (SOLAR_TERMS[month][termName]) return new Date(year, parseInt(month) - 1, SOLAR_TERMS[month][termName]); }
         return null;
     };
-    
     let birthYear = birthDate.getFullYear();
-    let lastTermDate = null;
-    let nextTermDate = null;
-
+    let lastTermDate = null, nextTermDate = null;
     for(let i=-2; i < termOrder.length * 2; i++){
         const yearOffset = Math.floor(i / termOrder.length);
         const currentTermName = termOrder[ (i + termOrder.length) % termOrder.length ];
         const currentTermDate = getTermDate(birthYear + yearOffset, currentTermName);
-
         if(!currentTermDate) continue;
-
-        if (currentTermDate <= birthDate) {
-            lastTermDate = currentTermDate;
-        } else {
-            nextTermDate = currentTermDate;
-            break; 
-        }
+        if (currentTermDate <= birthDate) { lastTermDate = currentTermDate; } else { nextTermDate = currentTermDate; break; }
     }
-    
-    if(!lastTermDate || !nextTermDate){
-        return { direction, startAge: 1 };
-    }
-
-    const diffDays = direction === 'forward'
-        ? (nextTermDate - birthDate) / (1000 * 60 * 60 * 24)
-        : (birthDate - lastTermDate) / (1000 * 60 * 60 * 24);
-
+    if(!lastTermDate || !nextTermDate) return { direction, startAge: 1 };
+    const diffDays = direction === 'forward' ? (nextTermDate - birthDate) / (1000 * 60 * 60 * 24) : (birthDate - lastTermDate) / (1000 * 60 * 60 * 24);
     const startAge = Math.floor(diffDays / 3) + 1;
     return { direction, startAge };
 };
@@ -174,20 +130,61 @@ const getDaeunPeriods = (monthPillar, daeunInfo, ilgan) => {
     let cheonganIdx = CHEONGAN_LIST.indexOf(monthPillar.cheongan);
     let jijiIdx = JIJI_LIST.indexOf(monthPillar.jiji);
     const step = daeunInfo.direction === 'forward' ? 1 : -1;
-
     for (let i = 0; i < 9; i++) {
         cheonganIdx = (cheonganIdx + step + 10) % 10;
         jijiIdx = (jijiIdx + step + 12) % 12;
         const cheongan = CHEONGAN_LIST[cheonganIdx];
         const jiji = JIJI_LIST[jijiIdx];
         const sipsinKey = getSipsin(ilgan, cheongan);
-        periods.push({
-            age: `${daeunInfo.startAge + i * 10}`,
-            daeun: `${CHEONGAN[cheongan].hangeul}${JIJI[jiji].hangeul}`,
-            sipsin: { type: 'term', category: '십신', key: sipsinKey, hangeul: sipsinKey },
-        });
+        periods.push({ age: `${daeunInfo.startAge + i * 10}`, daeun: `${CHEONGAN[cheongan].hangeul}${JIJI[jiji].hangeul}`, sipsin: { type: 'term', category: '십신', key: sipsinKey, hangeul: sipsinKey } });
     }
     return periods;
+};
+
+// --- 궁합 추천 함수 추가 ---
+const getCompatibility = (ilgan) => {
+    const recommendations = [];
+    const ilganData = CHEONGAN[ilgan];
+    if (!ilganData) return [];
+
+    // 1. 천생연분 (천간합)
+    const soulmateGan = CHEONGAN_HAP_MAP[ilgan];
+    if (soulmateGan) {
+        const soulmateData = CHEONGAN[soulmateGan];
+        recommendations.push({
+            type: "천생연분",
+            ilju: `${soulmateData.hangeul}${soulmateGan} 일주`,
+            description: `나의 일간 '${ilganData.hangeul}'과 하늘의 기운이 합을 이루는 최고의 궁합입니다. 서로에게 강하게 끌리며, 안정적인 관계를 만들어갑니다.`
+        });
+    }
+
+    // 2. 좋은 궁합 (내가 생해주는 오행)
+    const generatedElement = ELEMENT_RELATIONS.generates[ilganData.element];
+    const goodMatchGan = Object.keys(CHEONGAN).find(gan => CHEONGAN[gan].element === generatedElement && CHEONGAN[gan].yin_yang !== ilganData.yin_yang)
+                       || Object.keys(CHEONGAN).find(gan => CHEONGAN[gan].element === generatedElement);
+    if (goodMatchGan) {
+         const goodMatchData = CHEONGAN[goodMatchGan];
+         recommendations.push({
+            type: "좋은 궁합",
+            ilju: `${goodMatchData.hangeul}${goodMatchGan} 일주`,
+            description: `내가 도움을 주고 이끌어줄 수 있는 관계입니다. 나의 에너지가 상대방에게 힘이 되어주며, 함께 성장하는 즐거움이 있습니다.`
+        });
+    }
+
+    // 3. 친구 같은 궁합 (나를 생해주는 오행)
+    const generatingElement = ELEMENT_RELATIONS.generated_by[ilganData.element];
+    const supportiveMatchGan = Object.keys(CHEONGAN).find(gan => CHEONGAN[gan].element === generatingElement && CHEONGAN[gan].yin_yang !== ilganData.yin_yang)
+                             || Object.keys(CHEONGAN).find(gan => CHEONGAN[gan].element === generatingElement);
+    if (supportiveMatchGan) {
+        const supportiveData = CHEONGAN[supportiveMatchGan];
+        recommendations.push({
+            type: "친구 같은 궁합",
+            ilju: `${supportiveData.hangeul}${supportiveMatchGan} 일주`,
+            description: `나에게 도움을 주고 기운을 북돋아 주는 든든한 관계입니다. 함께 있으면 편안하고, 안정감을 느낄 수 있습니다.`
+        });
+    }
+
+    return recommendations.slice(0, 3);
 };
 
 // --- 메인 함수 ---
@@ -197,22 +194,16 @@ export const getSaju = (birthDate, gender, timeUnknown = false) => {
         const month = birthDate.getMonth() + 1;
         const day = birthDate.getDate();
         
-        // --- 기둥 계산 ---
         const yearPillar = getYearPillar(year, month, day);
         const monthPillar = getMonthPillar(year, month, day);
         const dayPillar = getDayPillar(year, month, day);
-        // 시간이 모름일 경우 시주를 계산하지 않음
-        const hourPillar = !timeUnknown
-            ? getHourPillar(dayPillar.cheongan, birthDate.getHours())
-            : { cheongan: '?', jiji: '?' };
+        const hourPillar = !timeUnknown ? getHourPillar(dayPillar.cheongan, birthDate.getHours()) : { cheongan: '?', jiji: '?' };
 
-        // --- 핵심 정보 추출 ---
         const ilgan = dayPillar.cheongan;
         const ilji = dayPillar.jiji;
         const iljuSipsin = getSipsin(ilgan, ilji);
         const zodiacAnimal = ZODIAC_ANIMALS[JIJI_LIST.indexOf(yearPillar.jiji)];
 
-        // 팔자(또는 육자) 배열 생성
         const palja = [
             { title: "시주", cheongan: hourPillar.cheongan, jiji: hourPillar.jiji },
             { title: "일주", cheongan: dayPillar.cheongan, jiji: dayPillar.jiji },
@@ -220,26 +211,16 @@ export const getSaju = (birthDate, gender, timeUnknown = false) => {
             { title: "년주", cheongan: yearPillar.cheongan, jiji: yearPillar.jiji },
         ];
         
-        // --- 대운 및 토정비결 계산 ---
         const daeunInfo = getDaeunInfo(birthDate, gender, yearPillar.cheongan);
         const daeunPeriods = getDaeunPeriods(monthPillar, daeunInfo, ilgan);
         const tojeongData = getTojeong(birthDate);
+        const compatibilityResults = getCompatibility(ilgan); // 궁합 데이터 생성
 
-        // --- 내러티브 텍스트 생성 ---
         const ilganTerm = { type: 'term', category: '천간', key: ilgan, hangeul: CHEONGAN[ilgan].hangeul + '일간' };
         const iljuSipsinTerm = { type: 'term', category: '십신', key: iljuSipsin, hangeul: iljuSipsin };
-
-        // 시간 모를 경우 안내 문구 추가
-        const summaryPrefix = timeUnknown
-          ? '태어난 시간을 몰라 시주(時柱)를 제외한 육자(六字)를 기반으로 풀이합니다. 시주를 제외하므로 일부 정확도가 떨어질 수 있습니다.\n\n'
-          : '';
-
-        // 동적 섹션 제목 및 설명
+        const summaryPrefix = timeUnknown ? '태어난 시간을 몰라 시주(時柱)를 제외한 육자(六字)를 기반으로 풀이합니다. 시주를 제외하므로 일부 정확도가 떨어질 수 있습니다.\n\n' : '';
         const paljaSectionTitle = timeUnknown ? "나의 사주 구조 (육자)" : "나의 사주팔자 구조";
-        const paljaParagraph = timeUnknown
-          ? "태어난 시간을 알 수 없어, 시주(時柱)를 제외한 년주, 월주, 일주 세 기둥(육자)을 바탕으로 당신의 타고난 기질과 운명의 흐름을 분석합니다."
-          : "사주팔자는 태어난 연, 월, 일, 시를 바탕으로 한 네 개의 기둥(사주)과 여덟 개의 글자(팔자)로 구성됩니다. 각 기둥은 천간과 지지로 이루어져 있으며, 이들의 상호작용을 통해 당신의 타고난 기질과 운명의 흐름을 분석할 수 있습니다.";
-
+        const paljaParagraph = timeUnknown ? "태어난 시간을 알 수 없어, 시주(時柱)를 제외한 년주, 월주, 일주 세 기둥(육자)을 바탕으로 당신의 타고난 기질과 운명의 흐름을 분석합니다." : "사주팔자는 태어난 연, 월, 일, 시를 바탕으로 한 네 개의 기둥(사주)과 여덟 개의 글자(팔자)로 구성됩니다. 각 기둥은 천간과 지지로 이루어져 있으며, 이들의 상호작용을 통해 당신의 타고난 기질과 운명의 흐름을 분석할 수 있습니다.";
 
         const narrative = {
             headline: {
@@ -248,7 +229,7 @@ export const getSaju = (birthDate, gender, timeUnknown = false) => {
             },
             summary: {
                 content: [
-                    { type: 'text', value: summaryPrefix }, // 시간 모름 안내 문구
+                    { type: 'text', value: summaryPrefix },
                     { type: 'text', value: `당신은 ${zodiacAnimal}띠 해에, ` },
                     ilganTerm,
                     { type: 'text', value: `(${CHEONGAN[ilgan].element} ${CHEONGAN[ilgan].yin_yang})으로 태어났습니다.\n${ILGAN_DESCRIPTION_MAP[ilgan]}\n\n` },
@@ -269,18 +250,9 @@ export const getSaju = (birthDate, gender, timeUnknown = false) => {
                             content: {
                                 columns: ["구분", "천간", "오행", "지지", "십신"],
                                 rows: palja.map(p => {
-                                    // 시주가 "모름"일 경우 테이블에 다르게 표시
-                                    if (timeUnknown && p.title === '시주') {
-                                        return [p.title, '모름', '-', '모름', '-'];
-                                    }
+                                    if (timeUnknown && p.title === '시주') return [p.title, '모름', '-', '모름', '-'];
                                     const sipsinKey = getSipsin(ilgan, p.cheongan);
-                                    return [
-                                        p.title,
-                                        `${CHEONGAN[p.cheongan].hangeul}(${p.cheongan})`,
-                                        CHEONGAN[p.cheongan].element,
-                                        `${JIJI[p.jiji].hangeul}(${p.jiji})`,
-                                        { type: 'term', category: '십신', key: sipsinKey, hangeul: sipsinKey }
-                                    ];
+                                    return [ p.title, `${CHEONGAN[p.cheongan].hangeul}(${p.cheongan})`, CHEONGAN[p.cheongan].element, `${JIJI[p.jiji].hangeul}(${p.jiji})`, { type: 'term', category: '십신', key: sipsinKey, hangeul: sipsinKey }];
                                 })
                             }
                         }
@@ -303,15 +275,18 @@ export const getSaju = (birthDate, gender, timeUnknown = false) => {
                         { type: "paragraph", content: { text: "다음은 월별 운세의 흐름입니다." } },
                         { type: "tojeong_monthly", content: { monthly: tojeongData.monthly } }
                     ]
+                },
+                // --- 궁합 섹션 추가 ---
+                {
+                    id: "compatibility_analysis",
+                    title: "나와 잘 맞는 사주 추천",
+                    blocks: [
+                        { type: "paragraph", content: { text: "사주 궁합은 두 사람의 관계를 이해하는 데 도움을 주는 지표입니다. 당신의 일간을 기준으로, 오행의 상생과 합의 원리에 따라 좋은 시너지를 낼 수 있는 사주 유형을 추천해 드립니다." } },
+                        { type: "compatibility_cards", content: { recommendations: compatibilityResults } }
+                    ]
                 }
             ]
         };
-        
-        // 시주가 없으면 대운/토정비결 섹션을 제거할 수도 있음 (정밀도 이슈)
-        // 현재는 모두 보여주는 것으로 유지
-        // if (timeUnknown) {
-        //     narrative.sections = narrative.sections.filter(s => s.id === 'palja_summary');
-        // }
 
         return { narrative, evidence: {} };
 
