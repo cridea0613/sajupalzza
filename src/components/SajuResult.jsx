@@ -10,6 +10,7 @@ import { getSaju } from '../utils/saju.js';
 import { sajuDict } from '../utils/saju-dict.js';
 import Compatibility from './Compatibility'; // 궁합 컴포넌트 임포트
 import TojeongResult from './TojeongResult'; // 토정비결 결과 컴포넌트
+import ConfirmDialog from './ConfirmDialog'; // 확인 다이얼로그 컴포넌트 임포트
 
 // --- 스타일 정의 ---
 
@@ -120,6 +121,7 @@ const SajuResult = () => {
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedTerm, setSelectedTerm] = useState(null);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [confirmOpen, setConfirmOpen] = useState(false);
 
     useEffect(() => {
         const { name, birthDateISO, gender, timeUnknown } = queryData;
@@ -131,6 +133,11 @@ const SajuResult = () => {
             navigate('/');
         }
     }, [queryData, navigate]);
+
+    const handleGoBackConfirm = () => {
+        setConfirmOpen(false);
+        navigate('/');
+    };
 
     const handleShare = () => { navigator.clipboard.writeText(window.location.href).then(() => setSnackbarOpen(true)); };
     const handlePrint = () => { window.print(); };
@@ -216,13 +223,21 @@ const SajuResult = () => {
                  
                 <Divider sx={{ my: 4, borderColor: 'rgba(139, 69, 19, 0.2)' }} className="no-print" />
                 <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'center', gap: 2, mt: 3 }} className="no-print">
-                    <ActionButton variant="contained" size="large" startIcon={<ArrowBackIcon />} onClick={() => navigate('/')} color="secondary">처음으로</ActionButton>
+                    <ActionButton variant="contained" size="large" startIcon={<ArrowBackIcon />} onClick={() => setConfirmOpen(true)} color="secondary">처음으로</ActionButton>
                     <ActionButton variant="contained" size="large" startIcon={<ShareIcon />} onClick={handleShare}>링크 공유</ActionButton>
                     <ActionButton variant="contained" size="large" startIcon={<PictureAsPdfIcon />} onClick={handlePrint}>PDF로 저장</ActionButton>
                 </Box>
             </StyledPaper>
             
             <TermModal open={modalOpen} handleClose={() => setModalOpen(false)} termData={selectedTerm} />
+            
+            <ConfirmDialog
+                open={confirmOpen}
+                onClose={() => setConfirmOpen(false)}
+                onConfirm={handleGoBackConfirm}
+                title="입력 페이지로 이동"
+                content="정말 처음으로 돌아가시겠습니까? 현재 결과는 저장되지 않습니다."
+            />
 
             <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={() => setSnackbarOpen(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} className="no-print">
                 <Alert onClose={() => setSnackbarOpen(false)} severity="success" sx={{ width: '100%' }}>링크가 클립보드에 복사되었습니다!</Alert>
