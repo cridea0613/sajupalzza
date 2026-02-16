@@ -8,9 +8,8 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { getSaju } from '../utils/saju.js';
 import { sajuDict } from '../utils/saju-dict.js';
-import ViewAgendaOutlined from '@mui/icons-material/ViewAgendaOutlined';
-import WindowOutlined from '@mui/icons-material/WindowOutlined';
 import Compatibility from './Compatibility'; // 궁합 컴포넌트 임포트
+import TojeongResult from './TojeongResult'; // 토정비결 결과 컴포넌트
 
 // --- 스타일 정의 ---
 
@@ -105,35 +104,6 @@ const ContentRenderer = ({ content, onClickTerm }) => {
     );
 };
 
-const MonthlyTojeongBlock = ({ block, index }) => {
-    const [layout, setLayout] = useState(2);
-    const handleLayoutChange = (_, newValue) => { if (newValue !== null) setLayout(newValue); };
-    const getGridProps = () => layout === 1 ? { xs: 12 } : { xs: 12, sm: 6 };
-
-    return (
-        <Box key={index} sx={{ mt: 2 }}>
-             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }} className="no-print">
-                <Tabs value={layout} onChange={handleLayoutChange} sx={{ minHeight: 'auto' }}>
-                    <Tab icon={<ViewAgendaOutlined />} value={1} sx={{ minWidth: 'auto', p: 1, color: '#8B4513' }} />
-                    <Tab icon={<WindowOutlined />} value={2} sx={{ minWidth: 'auto', p: 1, color: '#8B4513' }} />
-                </Tabs>
-            </Box>
-            <Grid container spacing={2}>
-                {block.content.monthly.map((m, i) => (
-                    <Grid item {...getGridProps()} key={i}>
-                        <Paper variant="outlined" sx={{ p: 2, height: '100%', borderColor: 'rgba(139, 69, 19, 0.2)', backgroundColor: 'transparent' }}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', fontFamily: '"Gowun Batang", serif' }}>{m.month}월</Typography>
-                            <Typography variant="body2" paragraph>{m.summary}</Typography>
-                            <Box>{m.keywords.map((kw, j) => <Chip key={j} label={kw} size="small" sx={{ mr: 0.5, mb: 0.5, backgroundColor: 'rgba(139, 69, 19, 0.1)' }} />)}</Box>
-                        </Paper>
-                    </Grid>
-                ))}
-            </Grid>
-        </Box>
-    );
-};
-
-
 const SajuResult = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -202,17 +172,8 @@ const SajuResult = () => {
                         ))}
                     </Grid>
                 );
-            case 'tojeong_summary':
-                 return (
-                    <Paper key={index} sx={{ p: 3, my: 2, backgroundColor: '#FFF8E1', border: '1px solid #FFECB3' }}>
-                        <Typography variant="h6" gutterBottom sx={{ fontFamily: '"Gowun Batang", serif', color: '#8B4513' }}>올해의 총운</Typography>
-                        <Typography paragraph>{block.content.summary}</Typography>
-                        <Box>{block.content.keywords.map((kw, i) => <Chip key={i} label={kw} sx={{ mr: 1, mb: 1, backgroundColor: 'rgba(139, 69, 19, 0.1)' }} />)}</Box>
-                    </Paper>
-                );
-            case 'tojeong_monthly':
-                return <MonthlyTojeongBlock block={block} index={index} />;
-            // --- 궁합 카드 렌더링 케이스 추가 ---
+            case 'tojeong_result':
+                return <TojeongResult key={index} result={block.content} />;
             case 'compatibility_cards':
                 return <Compatibility key={index} recommendations={block.content.recommendations} />;
             default:

@@ -208,7 +208,7 @@ export const getSaju = (birthDate, gender, timeUnknown = false) => {
         
         const daeunInfo = getDaeunInfo(birthDate, gender, yearPillar.cheongan);
         const daeunPeriods = getDaeunPeriods(monthPillar, daeunInfo, ilgan);
-        const tojeongData = getTojeong(birthDate);
+        const tojeongData = getTojeong(birthDate, new Date().getFullYear());
         const compatibilityResults = getCompatibility(ilgan); // 궁합 데이터 생성
 
         const ilganTerm = { type: 'term', category: '천간', key: ilgan, hangeul: CHEONGAN[ilgan].hangeul + '일간' };
@@ -263,12 +263,9 @@ export const getSaju = (birthDate, gender, timeUnknown = false) => {
                 },
                 {
                     id: "tojeong_analysis",
-                    title: `${tojeongData.title}`,
+                    title: `${new Date().getFullYear()}년 토정비결`,
                     blocks: [
-                        { type: "paragraph", content: { text: `토정비결은 일 년의 신수를 미리 짚어보는 전통적인 운세 분석 방법입니다. ${new Date().getFullYear()}년 당신의 총운은 다음과 같습니다.` } },
-                        { type: "tojeong_summary", content: { summary: tojeongData.summary, keywords: tojeongData.keywords } },
-                        { type: "paragraph", content: { text: "다음은 월별 운세의 흐름입니다." } },
-                        { type: "tojeong_monthly", content: { monthly: tojeongData.monthly } }
+                        { type: "tojeong_result", content: tojeongData }
                     ]
                 },
                 {
