@@ -191,69 +191,88 @@ const getDaeunPeriods = (monthPillar, daeunInfo, ilgan) => {
 };
 
 // --- 메인 함수 ---
-export const getSaju = (birthDate, gender) => {
+export const getSaju = (birthDate, gender, timeUnknown = false) => {
     try {
         const year = birthDate.getFullYear();
         const month = birthDate.getMonth() + 1;
         const day = birthDate.getDate();
-        const hour = birthDate.getHours();
-
+        
+        // --- 기둥 계산 ---
         const yearPillar = getYearPillar(year, month, day);
         const monthPillar = getMonthPillar(year, month, day);
         const dayPillar = getDayPillar(year, month, day);
-        const hourPillar = getHourPillar(dayPillar.cheongan, hour);
+        // 시간이 모름일 경우 시주를 계산하지 않음
+        const hourPillar = !timeUnknown
+            ? getHourPillar(dayPillar.cheongan, birthDate.getHours())
+            : { cheongan: '?', jiji: '?' };
 
+        // --- 핵심 정보 추출 ---
         const ilgan = dayPillar.cheongan;
         const ilji = dayPillar.jiji;
         const iljuSipsin = getSipsin(ilgan, ilji);
-        const yearJijiIndex = JIJI_LIST.indexOf(yearPillar.jiji);
-        const zodiacAnimal = ZODIAC_ANIMALS[yearJijiIndex];
+        const zodiacAnimal = ZODIAC_ANIMALS[JIJI_LIST.indexOf(yearPillar.jiji)];
 
+        // 팔자(또는 육자) 배열 생성
         const palja = [
             { title: "시주", cheongan: hourPillar.cheongan, jiji: hourPillar.jiji },
             { title: "일주", cheongan: dayPillar.cheongan, jiji: dayPillar.jiji },
             { title: "월주", cheongan: monthPillar.cheongan, jiji: monthPillar.jiji },
             { title: "년주", cheongan: yearPillar.cheongan, jiji: yearPillar.jiji },
         ];
-
+        
+        // --- 대운 및 토정비결 계산 ---
         const daeunInfo = getDaeunInfo(birthDate, gender, yearPillar.cheongan);
         const daeunPeriods = getDaeunPeriods(monthPillar, daeunInfo, ilgan);
-        
         const tojeongData = getTojeong(birthDate);
 
+        // --- 내러티브 텍스트 생성 ---
         const ilganTerm = { type: 'term', category: '천간', key: ilgan, hangeul: CHEONGAN[ilgan].hangeul + '일간' };
         const iljuSipsinTerm = { type: 'term', category: '십신', key: iljuSipsin, hangeul: iljuSipsin };
 
+        // 시간 모를 경우 안내 문구 추가
+        const summaryPrefix = timeUnknown
+          ? '태어난 시간을 몰라 시주(時柱)를 제외한 육자(六字)를 기반으로 풀이합니다. 시주를 제외하므로 일부 정확도가 떨어질 수 있습니다.\n\n'
+          : '';
+
+        // 동적 섹션 제목 및 설명
+        const paljaSectionTitle = timeUnknown ? "나의 사주 구조 (육자)" : "나의 사주팔자 구조";
+        const paljaParagraph = timeUnknown
+          ? "태어난 시간을 알 수 없어, 시주(時柱)를 제외한 년주, 월주, 일주 세 기둥(육자)을 바탕으로 당신의 타고난 기질과 운명의 흐름을 분석합니다."
+          : "사주팔자는 태어난 연, 월, 일, 시를 바탕으로 한 네 개의 기둥(사주)과 여덟 개의 글자(팔자)로 구성됩니다. 각 기둥은 천간과 지지로 이루어져 있으며, 이들의 상호작용을 통해 당신의 타고난 기질과 운명의 흐름을 분석할 수 있습니다.";
+
+
         const narrative = {
             headline: {
-                title_parts: [
-                    ilganTerm,
-                    { type: 'text', value: '으로 태어난 당신,' },
-                ],
+                title_parts: [ ilganTerm, { type: 'text', value: '으로 태어난 당신,' }],
                 text: "주체적인 삶을 개척하는 강한 의지를 지녔습니다."
             },
             summary: {
                 content: [
+                    { type: 'text', value: summaryPrefix }, // 시간 모름 안내 문구
                     { type: 'text', value: `당신은 ${zodiacAnimal}띠 해에, ` },
                     ilganTerm,
                     { type: 'text', value: `(${CHEONGAN[ilgan].element} ${CHEONGAN[ilgan].yin_yang})으로 태어났습니다.\n${ILGAN_DESCRIPTION_MAP[ilgan]}\n\n` },
                     { type: 'text', value: `일주(${CHEONGAN[ilgan].hangeul}${JIJI[ilji].hangeul})는 당신의 핵심적인 성향을 보여줍니다. ${JIJI[ilji].element}의 기운 위에 앉은 당신은 '` },
                     iljuSipsinTerm,
                     { type: 'text', value: `'의 특성을 강하게 드러냅니다.\n${SIPSIN_ANALYSIS_MAP[iljuSipsin] || ''}\n\n` },
-                    { type: 'text', value: '이는 당신의 삶 전반에 걸쳐 중요한 영향을 미치며, 대인관계, 직업, 재물 활동 등에서 구체적인 모습으로 나타나게 됩니다. 아래에서는 당신의 사주팔자 구조와 인생의 큰 흐름인 대운(大運)을 더 자세히 살펴보겠습니다.' },
+                    { type: 'text', value: '이는 당신의 삶 전반에 걸쳐 중요한 영향을 미치며, 대인관계, 직업, 재물 활동 등에서 구체적인 모습으로 나타나게 됩니다. 아래에서는 당신의 사주 구조와 인생의 큰 흐름인 대운(大運)을 더 자세히 살펴보겠습니다.' },
                 ]
             },
             sections: [
                 {
                     id: "palja_summary",
-                    title: "나의 사주팔자 구조",
+                    title: paljaSectionTitle,
                     blocks: [
-                         { type: "paragraph", content: {text: "사주팔자는 태어난 연, 월, 일, 시를 바탕으로 한 네 개의 기둥(사주)과 여덟 개의 글자(팔자)로 구성됩니다. 각 기둥은 천간과 지지로 이루어져 있으며, 이들의 상호작용을 통해 당신의 타고난 기질과 운명의 흐름을 분석할 수 있습니다."}},
+                         { type: "paragraph", content: {text: paljaParagraph}},
                          {
                             type: "table",
                             content: {
                                 columns: ["구분", "천간", "오행", "지지", "십신"],
                                 rows: palja.map(p => {
+                                    // 시주가 "모름"일 경우 테이블에 다르게 표시
+                                    if (timeUnknown && p.title === '시주') {
+                                        return [p.title, '모름', '-', '모름', '-'];
+                                    }
                                     const sipsinKey = getSipsin(ilgan, p.cheongan);
                                     return [
                                         p.title,
@@ -287,6 +306,12 @@ export const getSaju = (birthDate, gender) => {
                 }
             ]
         };
+        
+        // 시주가 없으면 대운/토정비결 섹션을 제거할 수도 있음 (정밀도 이슈)
+        // 현재는 모두 보여주는 것으로 유지
+        // if (timeUnknown) {
+        //     narrative.sections = narrative.sections.filter(s => s.id === 'palja_summary');
+        // }
 
         return { narrative, evidence: {} };
 
@@ -294,8 +319,8 @@ export const getSaju = (birthDate, gender) => {
         console.error("Error in getSaju:", error);
         return {
             narrative: {
-                headline: { title: "오류", text: "사주 정보를 계산하는 중 오류가 발생했습니다." },
-                summary: { text: "입력 값을 확인하시거나 잠시 후 다시 시도해주세요." },
+                headline: { title_parts: [{type:"text", value: "오류"}], text: "사주 정보를 계산하는 중 오류가 발생했습니다." },
+                summary: { content: [{type:"text", value: "입력 값을 확인하시거나 잠시 후 다시 시도해주세요." }]},
                 sections: []
             },
             evidence: {}

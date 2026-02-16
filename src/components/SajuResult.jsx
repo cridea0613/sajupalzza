@@ -164,7 +164,7 @@ const MonthlyTojeongBlock = ({ block, index }) => {
 const SajuResult = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { name, birthDate: birthDateISO, gender } = location.state || {};
+    const { name, birthDate: birthDateISO, gender, timeUnknown } = location.state || {}; // timeUnknown 상태 받기
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
@@ -178,12 +178,13 @@ const SajuResult = () => {
     useEffect(() => {
         if (birthDateISO) {
             const birthDate = new Date(birthDateISO);
-            setResult(getSaju(birthDate, gender));
+            // getSaju 호출 시 timeUnknown 전달
+            setResult(getSaju(birthDate, gender, timeUnknown));
             setLoading(false);
         } else {
             navigate('/');
         }
-    }, [birthDateISO, gender, navigate]);
+    }, [birthDateISO, gender, timeUnknown, navigate]);
 
     const renderBlock = (block, index) => {
         switch (block.type) {

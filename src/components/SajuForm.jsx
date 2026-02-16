@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Button, TextField, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, Paper, Typography, Grid, InputLabel, Select, MenuItem } from '@mui/material';
+import { Box, Button, TextField, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, Paper, Typography, Grid, InputLabel, Select, MenuItem, Checkbox } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 // --- 디자인 시스템 기반 스타일 컴포넌트 정의 ---
@@ -75,22 +75,46 @@ const SajuForm = () => {
   const [day, setDay] = useState('');
   const [hour, setHour] = useState('');
   const [minute, setMinute] = useState('');
+  const [timeUnknown, setTimeUnknown] = useState(false);
 
-  const [birthDate, setBirthDate] = useState(null);
+  const [isSubmittable, setIsSubmittable] = useState(false);
 
   useEffect(() => {
-    if (year && month && day && hour !== '' && minute !== '') {
-      const newDate = new Date(year, month - 1, day, hour, minute);
-      setBirthDate(newDate);
+    const isDateFilled = year && month && day;
+    const isTimeFilled = hour !== '' && minute !== '';
+    
+    if (name && isDateFilled && (isTimeFilled || timeUnknown)) {
+        setIsSubmittable(true);
     } else {
-      setBirthDate(null);
+        setIsSubmittable(false);
     }
-  }, [year, month, day, hour, minute]);
+  }, [name, year, month, day, hour, minute, timeUnknown]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (name && birthDate) {
-      navigate('/result', { state: { name, birthDate: birthDate.toISOString(), gender } });
+    if (!isSubmittable) return;
+
+    // birthDate를 이 시점에 최종적으로 생성
+    const birthDate = timeUnknown 
+        ? new Date(year, month - 1, day, 0, 0)
+        : new Date(year, month - 1, day, hour, minute);
+
+    navigate('/result', {
+        state: {
+          name,
+          birthDate: birthDate.toISOString(),
+          gender,
+          timeUnknown, // 시간 모름 상태 전달
+        },
+    });
+  };
+
+  const handleTimeUnknownChange = (event) => {
+    const isChecked = event.target.checked;
+    setTimeUnknown(isChecked);
+    if (isChecked) {
+      setHour('');
+      setMinute('');
     }
   };
 
@@ -106,7 +130,7 @@ const SajuForm = () => {
         <TitleTypography variant="h4" component="h1">
           사주 정보 입력
         </TitleTypography>
-         <Typography align="center" sx={{ mb: 3, fontFamily: '\"Gowun Dodum\", sans-serif' }}>
+        <Typography align="center" sx={{ mb: 3, fontFamily: '\"Gowun Dodum\", sans-serif' }}>
             이름과 생년월일시를 입력하고 AI가 분석하는 당신의 운명을 확인해보세요.
          </Typography>
         <Box component="form" onSubmit={handleSubmit} noValidate>
@@ -146,22 +170,34 @@ const SajuForm = () => {
                 </Select>
               </StyledFormControl>
             </Grid>
-            <Grid item xs={6} sm={6}>
-              <StyledFormControl fullWidth required disabled={!day}>
+            
+            <Grid item xs={12} sm={4}>
+              <StyledFormControl fullWidth required disabled={!day || timeUnknown}>
                 <InputLabel>시</InputLabel>
                 <Select value={hour} onChange={(e) => { setHour(e.target.value); }} label="시">
                   {hourOptions.map(h => <MenuItem key={h} value={h}>{h}시</MenuItem>)}
                 </Select>
               </StyledFormControl>
             </Grid>
-            <Grid item xs={6} sm={6}>
-              <StyledFormControl fullWidth required disabled={!hour}>
+            <Grid item xs={12} sm={4}>
+              <StyledFormControl fullWidth required disabled={!day || timeUnknown}>
                 <InputLabel>분</InputLabel>
                 <Select value={minute} onChange={(e) => setMinute(e.target.value)} label="분">
-                  <MenuItem value="">모름</MenuItem>
                   {minuteOptions.map(m => <MenuItem key={m} value={m}>{m}분</MenuItem>)}
                 </Select>
               </StyledFormControl>
+            </Grid>
+            <Grid item xs={12} sm={4} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            checked={timeUnknown}
+                            onChange={handleTimeUnknownChange}
+                            sx={{ color: '#B22222', '&.Mui-checked': { color: '#B22222' } }}
+                        />
+                    }
+                    label="시간 모름"
+                />
             </Grid>
 
             <Grid item xs={12}>
@@ -180,7 +216,7 @@ const SajuForm = () => {
                 fullWidth
                 variant="contained"
                 size="large"
-                disabled={!name || !birthDate}
+                disabled={!isSubmittable}
               >
                 분석 결과 보기
               </SubmitButton>
