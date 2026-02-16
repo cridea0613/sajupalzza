@@ -94,17 +94,19 @@ const SajuForm = () => {
     e.preventDefault();
     if (!isSubmittable) return;
 
+    // birthDate를 이 시점에 최종적으로 생성
     const birthDate = timeUnknown 
         ? new Date(year, month - 1, day, 0, 0)
         : new Date(year, month - 1, day, hour, minute);
 
-    const params = new URLSearchParams();
-    params.append('name', name);
-    params.append('birthDate', birthDate.toISOString());
-    params.append('gender', gender);
-    params.append('timeUnknown', timeUnknown);
-
-    navigate(`/result?${params.toString()}`);
+    navigate('/result', {
+        state: {
+          name,
+          birthDate: birthDate.toISOString(),
+          gender,
+          timeUnknown, // 시간 모름 상태 전달
+        },
+    });
   };
 
   const handleTimeUnknownChange = (event) => {
