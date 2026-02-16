@@ -5,7 +5,9 @@
   channel = "stable-24.05"; # or "unstable"
   # Use https://search.nixos.org/packages to find packages
   packages = [
-    pkgs.nodejs_20
+    # Force rebuild to update Node.js version
+    pkgs.nodejs_22
+    # Added a comment to trigger environment rebuild and fix auth issues.
   ];
   # Sets environment variables in the workspace
   env = {};
@@ -21,17 +23,6 @@
         npm-install = "npm i --no-audit --no-progress --timing";
         # Open editors for the following files by default, if they exist:
         default.openFiles = [ "src/App.tsx" "src/App.ts" "src/App.jsx" "src/App.js" ];
-      };
-      # To run something each time the workspace is (re)started, use the `onStart` hook
-    };
-    # Enable previews and customize configuration
-    previews = {
-      enable = true;
-      previews = {
-        web = {
-          command = ["npm" "run" "dev" "--" "--port" "$PORT" "--host" "0.0.0.0"];
-          manager = "web";
-        };
       };
     };
   };
