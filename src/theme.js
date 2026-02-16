@@ -16,16 +16,47 @@ const theme = createTheme({
     },
   },
   typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    // 본문 기본 폰트를 '나눔스퀘어 네오'로 설정합니다.
+    fontFamily: ['"Nanum Square Neo"', 'sans-serif'].join(','),
+    // 제목 폰트는 '고운바탕'을 유지합니다.
+    h1: {
+      fontFamily: 'Gowun Batang, serif',
+      fontWeight: 700,
+    },
+    h2: {
+      fontFamily: 'Gowun Batang, serif',
+      fontWeight: 700,
+    },
+    h3: {
+      fontFamily: 'Gowun Batang, serif',
+      fontWeight: 700,
+    },
     h4: {
+      fontFamily: 'Gowun Batang, serif',
       fontWeight: 700,
       fontSize: '2.2rem',
       lineHeight: 1.2,
     },
     h5: {
+      fontFamily: 'Gowun Batang, serif',
       fontWeight: 600,
       fontSize: '1.8rem',
       lineHeight: 1.3,
+    },
+    h6: {
+      fontFamily: 'Gowun Batang, serif',
+      fontWeight: 600,
+    },
+    // 본문 텍스트 스타일 정의
+    body1: {
+      fontFamily: '"Nanum Square Neo", sans-serif',
+      fontSize: '1rem',
+      lineHeight: 1.6,
+    },
+    body2: {
+      fontFamily: '"Nanum Square Neo", sans-serif',
+      fontSize: '0.875rem',
+      lineHeight: 1.5,
     },
   },
   components: {

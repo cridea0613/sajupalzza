@@ -86,7 +86,8 @@ const TermModal = ({ open, handleClose, termData }) => {
                     {hangeul} ({key})
                 </TitleTypography>
                 <Divider sx={{ my: 2, borderColor: 'rgba(139, 69, 19, 0.2)' }} />
-                <Typography sx={{ mt: 2, whiteSpace: 'pre-wrap', fontFamily: '"Gowun Dodum", sans-serif' }}>
+                {/* 폰트 스타일은 theme에서 상속받도록 하드코딩 제거 */}
+                <Typography sx={{ mt: 2, whiteSpace: 'pre-wrap' }}>
                     {termInfo || '설명을 찾을 수 없습니다.'}
                 </Typography>
             </Box>
@@ -111,17 +112,19 @@ const ClickableTerm = ({ term, onClick }) => (
     />
 );
 
+// ContentRenderer가 더 이상 Typography를 래핑하지 않도록 수정
+// 부모의 타이포그래피 스타일을 상속받게 됩니다.
 const ContentRenderer = ({ content, onClickTerm }) => {
     if (!content) return null;
     return (
-        <Typography component="div" sx={{ whiteSpace: 'pre-wrap', display: 'inline', alignItems: 'center', fontFamily: '"Gowun Dodum", sans-serif', lineHeight: 1.8 }}>
+        <>
             {content.map((part, index) => {
                 if (part.type === 'term') {
                     return <ClickableTerm key={index} term={part} onClick={onClickTerm} />;
                 }
                 return <span key={index}>{part.value}</span>;
             })}
-        </Typography>
+        </>
     );
 };
 
@@ -147,7 +150,8 @@ const MonthlyTojeongBlock = ({ block, index }) => {
                     <Grid item {...getGridProps()} key={i}>
                         <Paper variant="outlined" sx={{ p: 2, height: '100%', borderColor: 'rgba(139, 69, 19, 0.2)', backgroundColor: 'transparent' }}>
                             <Typography variant="subtitle1" sx={{ fontWeight: 'bold', fontFamily: '"Gowun Batang", serif' }}>{m.month}월</Typography>
-                            <Typography variant="body2" paragraph sx={{ fontFamily: '"Gowun Dodum", sans-serif' }}>{m.summary}</Typography>
+                             {/* 폰트 스타일은 theme에서 상속 */}
+                            <Typography variant="body2" paragraph>{m.summary}</Typography>
                             <Box>{m.keywords.map((kw, j) => <Chip key={j} label={kw} size="small" sx={{ mr: 0.5, mb: 0.5, backgroundColor: 'rgba(139, 69, 19, 0.1)' }} />)}</Box>
                         </Paper>
                     </Grid>
@@ -184,7 +188,8 @@ const SajuResult = () => {
     const renderBlock = (block, index) => {
         switch (block.type) {
             case 'paragraph':
-                return <Typography key={index} paragraph sx={{ whiteSpace: 'pre-wrap', fontFamily: '"Gowun Dodum", sans-serif', lineHeight: 1.8 }}>{block.content.text}</Typography>;
+                {/* 폰트 스타일은 theme에서 상속 */}
+                return <Typography key={index} paragraph sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>{block.content.text}</Typography>;
             case 'table':
                 return (
                     <Paper key={index} variant="outlined" sx={{ mt: 2, borderColor: 'rgba(139, 69, 19, 0.2)', backgroundColor: 'transparent' }}>
@@ -197,7 +202,7 @@ const SajuResult = () => {
                                     {block.content.rows.map((row, i) => (
                                         <tr key={i}>
                                             {row.map((cell, j) => (
-                                                <td key={j} style={{ padding: '12px', border: '1px solid rgba(139, 69, 19, 0.2)', textAlign: 'center', fontFamily: '"Gowun Dodum", sans-serif' }}>
+                                                <td key={j} style={{ padding: '12px', border: '1px solid rgba(139, 69, 19, 0.2)', textAlign: 'center' }}>
                                                     {cell.type === 'term' ? <ClickableTerm term={cell} onClick={handleTermClick} /> : cell}
                                                 </td>
                                             ))}
@@ -215,7 +220,8 @@ const SajuResult = () => {
                             <Grid item xs={12} sm={6} md={4} key={i}>
                                 <Paper elevation={0} variant="outlined" sx={{ p: 2, textAlign: 'center', borderColor: 'rgba(139, 69, 19, 0.2)', backgroundColor: 'transparent' }}>
                                     <Typography variant="h6" sx={{ fontFamily: '"Gowun Batang", serif' }}>{p.age}세</Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 'bold', fontFamily: '"Gowun Dodum", sans-serif' }}>{p.daeun}</Typography>
+                                    {/* 폰트 스타일은 theme에서 상속 */}
+                                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{p.daeun}</Typography>
                                     <ClickableTerm term={p.sipsin} onClick={handleTermClick} />
                                 </Paper>
                             </Grid>
@@ -226,7 +232,8 @@ const SajuResult = () => {
                  return (
                     <Paper key={index} sx={{ p: 3, my: 2, backgroundColor: '#FFF8E1', border: '1px solid #FFECB3' }}>
                         <Typography variant="h6" gutterBottom sx={{ fontFamily: '"Gowun Batang", serif', color: '#8B4513' }}>올해의 총운</Typography>
-                        <Typography paragraph sx={{ fontFamily: '"Gowun Dodum", sans-serif' }}>{block.content.summary}</Typography>
+                        {/* 폰트 스타일은 theme에서 상속 */}
+                        <Typography paragraph>{block.content.summary}</Typography>
                         <Box>{block.content.keywords.map((kw, i) => <Chip key={i} label={kw} sx={{ mr: 1, mb: 1, backgroundColor: 'rgba(139, 69, 19, 0.1)' }} />)}</Box>
                     </Paper>
                 );
@@ -237,7 +244,7 @@ const SajuResult = () => {
         }
     };
 
-    if (loading) return <StyledRoot><CircularProgress sx={{ color: '#8B4513' }} /></StyledRoot>;
+    if (loading) return <StyledRoot><Box sx={{display: 'flex', justifyContent:'center', pt: 10}}><CircularProgress sx={{ color: '#8B4513' }} /></Box></StyledRoot>;
     if (!result?.narrative) return <StyledRoot><Typography>결과를 생성하지 못했습니다.</Typography></StyledRoot>;
 
     const { narrative } = result;
@@ -250,13 +257,48 @@ const SajuResult = () => {
                 </TitleTypography>
                 <Divider sx={{ my: 2, borderColor: 'rgba(139, 69, 19, 0.2)' }} />
 
-                <Box sx={{ my: 3, textAlign: 'center' }}>
-                    <TitleTypography variant="h5" component="h2" sx={{ mb: 1 }}>
+                {/* --- 개선된 헤드라인 --- */}
+                <Box sx={{ my: 4, textAlign: 'center' }}>
+                    <TitleTypography
+                        variant="h5"
+                        component="h2"
+                        sx={{
+                            mb: 1.5,
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            gap: 1,
+                            // 반응형 폰트 크기 적용으로 가시성 극대화
+                            fontSize: { xs: '1.6rem', sm: '2.0rem', md: '2.4rem' },
+                            // 이 안에 있는 Chip만 타겟으로 스타일을 적용합니다.
+                            '& .MuiChip-root': {
+                                height: 'auto',
+                            },
+                            '& .MuiChip-label': {
+                                // 주변 텍스트보다 훨씬 큰 반응형 폰트 사이즈를 독립적으로 설정
+                                fontSize: { xs: '2.4rem', sm: '3.0rem', md: '3.6rem' }, 
+                                lineHeight: 1.2, 
+                                padding: '0.4em 0.6em', // 폰트 크기에 비례하는 패딩
+                            }
+                        }}
+                    >
                          <ContentRenderer content={narrative.headline.title_parts} onClickTerm={handleTermClick} />
                     </TitleTypography>
-                    <Typography variant="subtitle1" color="text.secondary" gutterBottom sx={{ fontFamily: '"Gowun Dodum", sans-serif' }}>{narrative.headline.text}</Typography>
+                    <Typography
+                        variant="subtitle1"
+                        color="text.secondary"
+                        gutterBottom
+                        sx={{
+                             // 부제도 반응형 폰트 크기 적용
+                            fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' },
+                        }}
+                    >
+                        {narrative.headline.text}
+                    </Typography>
                 </Box>
-                 <Typography paragraph >
+                
+                 <Typography paragraph sx={{lineHeight: 1.8, fontSize: '1.1rem'}}>
                     <ContentRenderer content={narrative.summary.content} onClickTerm={handleTermClick} />
                 </Typography>
 
